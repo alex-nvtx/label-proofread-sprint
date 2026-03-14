@@ -1,0 +1,7 @@
+{
+  "build": {
+    "env": {
+      "VITE_APP_NAME": "@vercelish/app"
+    }
+  }
+}
