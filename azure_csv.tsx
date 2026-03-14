@@ -35,7 +35,7 @@ const milestones = [
   { label:"🔨 P0/P1 Punch List Fixes",         date: dayDate(21), week:"Week 4" },
   { label:"🧾 UAT Sessions",                   date: dayDate(23), week:"Week 4" },
   { label:"📘 Handover Docs Complete",         date: dayDate(25), week:"Week 4" },
-  { label:"🏁 Final Handover & Sign-off",      date: dayDate(27), week:"Week 4", highlight:true },
+  { label:"🏁 Alpha Release - Ready to Launch",      date: dayDate(27), week:"Week 4", highlight:true },
 ];
 
 const STATUS_COLORS = {
