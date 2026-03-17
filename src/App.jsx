@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "./supabase";
 
 const START = new Date(2026, 2, 16);
 const addWorkdays = (from, n) => {
@@ -320,33 +321,41 @@ export default function App() {
   // ── Load persisted data ──────────────────────────────────
   useEffect(() => {
     (async () => {
+      console.log("[Supabase] client:", supabase);
       try {
-        const r = await window.storage?.get?.("sprint-tasks-v2");
-        if (r?.value) {
-          const saved = JSON.parse(r.value);
+        if (!supabase) throw new Error("Supabase not configured");
+        const { data, error } = await supabase.from("sprint_tasks").select("*");
+        if (error) throw error;
+        if (data?.length) {
+          const saved = {};
+          data.forEach(row => { saved[row.id] = row; });
           setRows(prev => prev.map(t => {
             const s = saved[t.id];
             return s ? {...t, status:s.status, notes:s.notes} : t;
           }).concat(
-            Object.entries(saved)
-              .filter(([id]) => id.startsWith("C"))
-              .map(([,v]) => ({...v, date: new Date(v.date)}))
+            data
+              .filter(row => row.id.startsWith("C") && row.task_data)
+              .map(row => ({...row.task_data, date: new Date(row.task_data.date)}))
           ));
         }
-      } catch(_) {}
+      } catch(e) { console.error("[Supabase] load error:", e); }
       setLoaded(true);
     })();
   }, []);
 
   // ── Persist on every change ──────────────────────────────
   useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || !supabase) return;
     setSaving(true);
-    const data = {};
-    rows.forEach(t => { data[t.id] = {status:t.status, notes:t.notes, ...(t.id.startsWith("C")?t:{})}; });
-    window.storage?.set?.("sprint-tasks-v2", JSON.stringify(data))
-      .then(() => setTimeout(() => setSaving(false), 800))
-      .catch(() => setSaving(false));
+    const upsertData = rows.map(t => ({
+      id: t.id,
+      status: t.status,
+      notes: t.notes || "",
+      task_data: t.id.startsWith("C") ? t : null,
+    }));
+    supabase.from("sprint_tasks").upsert(upsertData)
+      .then(({ error }) => { if (error) console.error("[Supabase] upsert error:", error); setTimeout(() => setSaving(false), 800); })
+      .catch(e => { console.error("[Supabase] upsert catch:", e); setSaving(false); });
   }, [rows, loaded]);
 
   const upd = (id,f,v) => setRows(p=>p.map(t=>t.id===id?{...t,[f]:v}:t));
