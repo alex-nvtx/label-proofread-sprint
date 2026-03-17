@@ -321,7 +321,7 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        const r = await window.storage.get("sprint-tasks-v2");
+        const r = await window.storage?.get?.("sprint-tasks-v2");
         if (r?.value) {
           const saved = JSON.parse(r.value);
           setRows(prev => prev.map(t => {
@@ -344,7 +344,7 @@ export default function App() {
     setSaving(true);
     const data = {};
     rows.forEach(t => { data[t.id] = {status:t.status, notes:t.notes, ...(t.id.startsWith("C")?t:{})}; });
-    window.storage.set("sprint-tasks-v2", JSON.stringify(data))
+    window.storage?.set?.("sprint-tasks-v2", JSON.stringify(data))
       .then(() => setTimeout(() => setSaving(false), 800))
       .catch(() => setSaving(false));
   }, [rows, loaded]);
